@@ -1,20 +1,33 @@
-name: Rust
+name: Release
+
+permissions:
+  contents: write
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-env:
-  CARGO_TERM_COLOR: always
+    tags:
+      - v[0-9]+.*
 
 jobs:
-  build:
-
+  create-release:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --release --verbose
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          # (optional) Path to changelog.
+          # (required) GitHub token for creating GitHub Releases.
+          token: ${{ secrets.TOKEN }}
+
+  upload-assets:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+          # Note that glob pattern is not supported yet.
+          bin: maybe
+          # (required) GitHub token for uploading assets to GitHub Releases.
+          token: ${{ secrets.TOKEN }}
